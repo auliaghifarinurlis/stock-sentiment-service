@@ -51,12 +51,6 @@ jobs:
     needs: build
     timeout-minutes: 300
     steps:
-      # Step 1: Download Docker Image Artifact (if needed)
-      - name: Download Docker Image Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: docker-image
-          path: ./artifact
 
       # Step 2: Log in to DigitalOcean Container Registry
       - name: Log in to DigitalOcean Container Registry
