@@ -14,7 +14,7 @@ env:
   IMAGE_NAME: "fastapi-sentiment"
 
 jobs:
-  build_and_push:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
@@ -23,26 +23,27 @@ jobs:
       - name: Build container image
         run: docker build -t $REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7} .
 
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
+      - name: Save Docker image as artifact
+        uses: actions/upload-artifact@v3
         with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          name: docker-image
+          path: path/to/image.tar
 
-      - name: Log in to DigitalOcean Container Registry
-        run: |
-          echo ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }} | docker login registry.digitalocean.com -u doctl --password-stdin
+  push:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-image
 
-      # Removed the step that removes old images
+      - name: Load Docker image
+        run: docker load -i path/to/image.tar
 
       - name: Push image to DigitalOcean Container Registry
         run: docker push $REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}
 
-      # Debugging Steps
-      - name: Verify Docker Login
-        run: docker info
-
-      - name: Verify doctl Authentication
-        run: doctl auth check
 
   deploy:
     runs-on: ubuntu-latest
