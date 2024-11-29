@@ -32,18 +32,17 @@ jobs:
         run: |
           docker build -t $REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7} .
 
-      # Step 4: Save Docker Image as Artifact
-      - name: Save Docker Image as Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: docker-image
-          path: |
-            ./docker-image-info.txt
-
-      # Optional: Capture Docker Image Details
+      # Step 4: Capture Docker Image Details
       - name: Capture Docker Image Details
         run: |
           docker images $REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7} > docker-image-info.txt
+
+      # Step 5: Save Docker Image Info as Artifact
+      - name: Save Docker Image Info as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-image-info
+          path: docker-image-info.txt
 
   push:
     name: Push Docker Image to Registry
@@ -52,7 +51,7 @@ jobs:
     timeout-minutes: 300
     steps:
 
-      # Step 2: Log in to DigitalOcean Container Registry
+      # Step 1: Log in to DigitalOcean Container Registry
       - name: Log in to DigitalOcean Container Registry
         uses: docker/login-action@v2
         with:
@@ -60,7 +59,7 @@ jobs:
           username: doctl
           password: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-      # Step 3: Push Docker Image with Retry Logic
+      # Step 2: Push Docker Image with Retry Logic
       - name: Push Docker Image with Retries
         run: |
           for i in {1..5}; do
@@ -69,7 +68,7 @@ jobs:
             sleep 10
           done
 
-      # Optional: Verify Docker Push
+      # Step 3: Verify Docker Push
       - name: Verify Docker Push
         run: docker images $REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}
 
@@ -79,8 +78,6 @@ jobs:
     needs: push
     timeout-minutes: 300
     env:
-      REGISTRY: ${{ env.REGISTRY }}
-      IMAGE_NAME: ${{ env.IMAGE_NAME }}
       GITHUB_SHA: ${{ github.sha }}
       DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
     steps:
