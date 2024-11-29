@@ -83,7 +83,7 @@ jobs:
     steps:
       # Step 1: Deploy via SSH using Appleboy's SSH Action
       - name: Deploy to DigitalOcean Droplet via SSH
-        uses: appleboy/ssh-action@v0.1.14  # Updated to a more recent version
+        uses: appleboy/ssh-action@v0.1.3  # Updated to a more recent version
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
