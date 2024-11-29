@@ -74,45 +74,45 @@ jobs:
         run: docker images $REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}
 
   deploy:
-      name: Deploy to DigitalOcean Droplet
-      runs-on: ubuntu-latest
-      needs: push
-      timeout-minutes: 300
-      env:
-        REGISTRY: ${{ env.REGISTRY }}
-        IMAGE_NAME: ${{ env.IMAGE_NAME }}
-        GITHUB_SHA: ${{ github.sha }}
-        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-      steps:
-        # Step 1: Deploy via SSH using Appleboy's SSH Action
-        - name: Deploy to DigitalOcean Droplet via SSH
-          uses: appleboy/ssh-action@v0.1.14  # Updated to a more recent version
-          with:
-            host: ${{ secrets.HOST }}
-            username: ${{ secrets.USERNAME }}
-            key: ${{ secrets.SSHKEY }}
-            envs: IMAGE_NAME,REGISTRY,DIGITALOCEAN_ACCESS_TOKEN,GITHUB_SHA
-            script: |
-              # Exit immediately if a command exits with a non-zero status
-              set -e
+    name: Deploy to DigitalOcean Droplet
+    runs-on: ubuntu-latest
+    needs: push
+    timeout-minutes: 300
+    env:
+      REGISTRY: ${{ env.REGISTRY }}
+      IMAGE_NAME: ${{ env.IMAGE_NAME }}
+      GITHUB_SHA: ${{ github.sha }}
+      DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+    steps:
+      # Step 1: Deploy via SSH using Appleboy's SSH Action
+      - name: Deploy to DigitalOcean Droplet via SSH
+        uses: appleboy/ssh-action@v0.1.14  # Updated to a more recent version
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSHKEY }}
+          envs: IMAGE_NAME,REGISTRY,DIGITALOCEAN_ACCESS_TOKEN,GITHUB_SHA
+          script: |
+            # Exit immediately if a command exits with a non-zero status
+            set -e
 
-              echo "Logging into DigitalOcean Container Registry..."
-              echo $DIGITALOCEAN_ACCESS_TOKEN | docker login registry.digitalocean.com -u doctl --password-stdin
+            echo "Logging into DigitalOcean Container Registry..."
+            echo $DIGITALOCEAN_ACCESS_TOKEN | docker login registry.digitalocean.com -u doctl --password-stdin
 
-              echo "Stopping existing container if it exists..."
-              docker stop $IMAGE_NAME || true
+            echo "Stopping existing container if it exists..."
+            docker stop $IMAGE_NAME || true
 
-              echo "Removing existing container if it exists..."
-              docker rm $IMAGE_NAME || true
+            echo "Removing existing container if it exists..."
+            docker rm $IMAGE_NAME || true
 
-              echo "Pulling the latest Docker image..."
-              docker pull $REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}
+            echo "Pulling the latest Docker image..."
+            docker pull $REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}
 
-              echo "Running the new container..."
-              docker run -d \
-                --restart always \
-                --name $IMAGE_NAME \
-                -p 4001:4001 \
-                $REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}
+            echo "Running the new container..."
+            docker run -d \
+              --restart always \
+              --name $IMAGE_NAME \
+              -p 4001:4001 \
+              $REGISTRY/$IMAGE_NAME:${GITHUB_SHA::7}
 
-              echo "Deployment completed successfully."
+            echo "Deployment completed successfully."
